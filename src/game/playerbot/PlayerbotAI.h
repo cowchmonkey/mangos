@@ -5,6 +5,7 @@
 #include "../QuestDef.h"
 #include "../GameEventMgr.h"
 #include "../ObjectGuid.h"
+#include "../Unit.h"
 
 class WorldPacket;
 class WorldObject;
@@ -92,7 +93,7 @@ public:
         COMBAT_RANGED               = 0x02              // class is ranged attacker
     };
 
-    // masters orders that should be obeyed by the AI during the updteAI routine
+    // masters orders that should be obeyed by the AI during the updateAI routine
     // the master will auto set the target of the bot
     enum CombatOrderType
     {
@@ -140,7 +141,23 @@ public:
         MOVEMENT_STAY               = 0x02
     };
 
+    enum TaskFlags
+    {
+        NONE                        = 0x00,
+        SELL_ITEMS                  = 0x01,  // sell items
+        REPAIR_ITEMS                = 0x02,  // repair items
+        ADD_AUCTION                 = 0x03,  // add auction
+        REMOVE_AUCTION              = 0x04,  // remove auction
+        RESET_TALENTS               = 0x05,  // reset all talents
+        BANK_WITHDRAW               = 0x06,  // withdraw item from bank
+        BANK_DEPOSIT                = 0x07   // deposit item in bank
+    };
+
+    typedef std::pair<enum TaskFlags, uint32> taskPair;
+    typedef std::list<taskPair> BotTaskList;
+    typedef std::list<enum NPCFlags> BotNPCList;
     typedef std::map<uint32, uint32> BotNeedItem;
+    typedef std::pair<uint32,uint32> talentPair;
     typedef std::list<ObjectGuid> BotLootTarget;
     typedef std::list<uint32> BotLootEntry;
     typedef std::list<uint32> BotSpellList;
@@ -193,7 +210,7 @@ public:
     ScenarioType GetScenarioType() { return m_ScenarioType; }
 
     PlayerbotClassAI* GetClassAI() { return m_classAI; }
-    PlayerbotMgr* const GetManager() { return m_mgr; }
+    PlayerbotMgr* GetManager() { return m_mgr; }
 
     // finds spell ID for matching substring args
     // in priority of full text match, spells not taking reagents, and highest rank
@@ -202,6 +219,12 @@ public:
     // Initialize spell using rank 1 spell id
     uint32 initSpell(uint32 spellId);
     uint32 initPetSpell(uint32 spellIconId);
+
+    // extract auction ids from links
+    void extractAuctionIds(const std::string& text, std::list<uint32>& auctionIds) const;
+
+    // extracts talent ids to list
+    void extractTalentIds(const std::string& text, std::list<talentPair>& talentIds) const;
 
     // extracts item ids from links
     void extractItemIds(const std::string& text, std::list<uint32>& itemIds) const;
@@ -224,6 +247,8 @@ public:
     void findItemsInInv(std::list<uint32>& itemIdSearchList, std::list<Item*>& foundItemList) const;
     // finds nearby game objects that are specified in m_collectObjects then adds them to the m_lootTargets list
     void findNearbyGO();
+    // finds nearby creatures, whose UNIT_NPC_FLAGS match the flags specified in item list m_itemIds
+    void findNearbyCreature();
 
     void MakeSpellLink(const SpellEntry *sInfo, std::ostringstream &out, Player* player = NULL);
 
@@ -239,7 +264,6 @@ public:
 
     bool CanReceiveSpecificSpell(uint8 spec, Unit* target) const;
 
-    bool PickPocket(Unit* pTarget);
     bool HasTool(uint32 TC);
     bool HasSpellReagents(uint32 spellId);
 
@@ -262,6 +286,7 @@ public:
     Item* FindPoison() const;
     Item* FindMount(uint32 matchingRidingSkill) const;
     Item* FindItem(uint32 ItemId);
+    Item* FindItemInBank(uint32 ItemId);
     Item* FindKeyForLockValue(uint32 reqSkillValue);
     Item* FindBombForLockValue(uint32 reqSkillValue);
     Item* FindConsumable(uint32 displayId) const;
@@ -283,7 +308,7 @@ public:
     void UseItem(Item *item, Unit *target);
     void UseItem(Item *item);
 
-    void EquipItem(Item& item);
+    void EquipItem(Item* src_Item);
     //void Stay();
     //bool Follow(Player& player);
     void SendNotEquipList(Player& player);
@@ -304,8 +329,9 @@ public:
     void SetQuestNeedItems();
     void SendQuestItemList(Player& player);
     bool IsInQuestItemList(uint32 itemid) { return m_needItemList.find(itemid) != m_needItemList.end(); };
+    bool IsItemUseful(uint32 itemid);
     void SendOrders(Player& player);
-    bool FollowCheckTeleport(WorldObject &obj);
+    bool DoTeleport(WorldObject &obj);
     void DoLoot();
     void DoFlight();
     void GetTaxi(ObjectGuid guid, BotTaxiNode& nodes);
@@ -342,6 +368,17 @@ public:
     void QuestLocalization(std::string& questTitle, const uint32 questID) const;
 
     uint8 GetFreeBagSpace() const;
+    void SellGarbage(bool verbose = true);
+    bool Sell(const uint32 itemid);
+    bool AddAuction(const uint32 itemid, Creature* aCreature);
+    bool ListAuctions();
+    bool RemoveAuction(const uint32 auctionid);
+    bool Repair(const uint32 itemid, Creature* rCreature);
+    bool Talent(Creature* tCreature);
+    void InspectUpdate();
+    bool Withdraw(const uint32 itemid);
+    bool Deposit(const uint32 itemid);
+    void BankBalance();
 
 private:
     // ****** Closed Actions ********************************
@@ -353,6 +390,10 @@ private:
 
     // Helper routines not needed by class AIs.
     void UpdateAttackersForTarget(Unit *victim);
+
+    void _doSellItem(Item* const item, std::ostringstream &report, std::ostringstream &canSell, uint32 &TotalCost, uint32 &TotalSold);
+    void MakeItemLink(const Item *item, std::ostringstream &out, bool IncludeQuantity = true);
+    void MakeItemLink(const ItemPrototype *item, std::ostringstream &out);
 
     // it is safe to keep these back reference pointers because m_bot
     // owns the "this" object and m_master owns m_bot. The owner always cleans up.
@@ -377,6 +418,8 @@ private:
     BotNeedItem m_needItemList;
 
     // list of creatures we recently attacked and want to loot
+    BotNPCList m_findNPC;               // list of NPCs
+    BotTaskList m_tasks;                // list of tasks
     BotLootTarget m_lootTargets;        // list of targets
     BotSpellList m_spellsToLearn;       // list of spells
     ObjectGuid m_lootCurrent;           // current remains of interest
