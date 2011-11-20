@@ -1,4 +1,5 @@
 #include "Config/Config.h"
+#include "config.h"
 #include "../Player.h"
 #include "PlayerbotAI.h"
 #include "PlayerbotMgr.h"
@@ -6,7 +7,6 @@
 #include "../Chat.h"
 #include "../ObjectMgr.h"
 #include "../GossipDef.h"
-#include "../Chat.h"
 #include "../Language.h"
 #include "../WaypointMovementGenerator.h"
 
@@ -14,6 +14,19 @@ class LoginQueryHolder;
 class CharacterHandler;
 
 Config botConfig;
+
+void PlayerbotMgr::SetInitialWorldSettings()
+{
+    //Get playerbot configuration file
+    if (!botConfig.SetSource(_PLAYERBOT_CONFIG))
+        sLog.outError("Playerbot: Unable to open configuration file. Database will be unaccessible. Configuration values will use default.");
+    else
+        sLog.outString("Playerbot: Using configuration file %s",_PLAYERBOT_CONFIG);
+
+    //Check playerbot config file version
+    if (botConfig.GetIntDefault("ConfVersion", 0) != PLAYERBOT_CONF_VERSION)
+        sLog.outError("Playerbot: Configuration file version doesn't match expected version. Some config variables may be wrong or missing.");
+}
 
 PlayerbotMgr::PlayerbotMgr(Player* const master) : m_master(master)
 {
@@ -28,6 +41,18 @@ PlayerbotMgr::PlayerbotMgr(Player* const master) : m_master(master)
     m_confCollectLoot = botConfig.GetBoolDefault("PlayerbotAI.Collect.Loot", true);
     m_confCollectSkin = botConfig.GetBoolDefault("PlayerbotAI.Collect.Skin", true);
     m_confCollectObjects = botConfig.GetBoolDefault("PlayerbotAI.Collect.Objects", true);
+    m_confCollectDistanceMax = botConfig.GetIntDefault("PlayerbotAI.Collect.DistanceMax", 50);
+    if (m_confCollectDistanceMax > 100)
+    {
+        sLog.outError("Playerbot: PlayerbotAI.Collect.DistanceMax higher than allowed. Using 100");
+        m_confCollectDistanceMax = 100;
+    }
+    m_confCollectDistance = botConfig.GetIntDefault("PlayerbotAI.Collect.Distance", 25);
+    if (m_confCollectDistance > m_confCollectDistanceMax)
+    {
+        sLog.outError("Playerbot: PlayerbotAI.Collect.Distance higher than PlayerbotAI.Collect.DistanceMax. Using DistanceMax value");
+        m_confCollectDistance = m_confCollectDistanceMax;
+    }
 }
 
 PlayerbotMgr::~PlayerbotMgr()
@@ -378,18 +403,31 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
             ObjectGuid objGUID;
             p >> objGUID;
 
-            GameObject *obj = m_master->GetMap()->GetGameObject(objGUID);
-            if (!obj)
-                return;
-
             for (PlayerBotMap::const_iterator it = GetPlayerBotsBegin(); it != GetPlayerBotsEnd(); ++it)
             {
                 Player* const bot = it->second;
 
-                if (obj->GetGoType() == GAMEOBJECT_TYPE_QUESTGIVER)
-                    bot->GetPlayerbotAI()->TurnInQuests(obj);
+                GameObject *obj = m_master->GetMap()->GetGameObject(objGUID);
+                if (!obj)
+                    return;
+
                 // add other go types here, i.e.:
                 // GAMEOBJECT_TYPE_CHEST - loot quest items of chest
+                if (obj->GetGoType() == GAMEOBJECT_TYPE_QUESTGIVER)
+                {
+                    bot->GetPlayerbotAI()->TurnInQuests(obj);
+
+                    // auto accept every available quest this NPC has
+                    bot->PrepareQuestMenu(objGUID);
+                    QuestMenu& questMenu = bot->PlayerTalkClass->GetQuestMenu();
+                    for (uint32 iI = 0; iI < questMenu.MenuItemCount(); ++iI)
+                    {
+                        QuestMenuItem const& qItem = questMenu.GetItem(iI);
+                        uint32 questID = qItem.m_qId;
+                        if (!bot->GetPlayerbotAI()->AddQuest(questID, obj))
+                            DEBUG_LOG("Couldn't take quest");
+                    }
+                }
             }
         }
         break;
@@ -455,9 +493,17 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
 
                         // build needed items if quest contains any
                         for (int i = 0; i < QUEST_ITEM_OBJECTIVES_COUNT; i++)
-                            if (qInfo->ReqItemCount[i]>0)
+                            if (qInfo->ReqItemCount[i] > 0)
                             {
                                 bot->GetPlayerbotAI()->SetQuestNeedItems();
+                                break;
+                            }
+
+                        // build needed creatures if quest contains any
+                        for (int i = 0; i < QUEST_OBJECTIVES_COUNT; i++)
+                            if (qInfo->ReqCreatureOrGOCount[i] > 0)
+                            {
+                                bot->GetPlayerbotAI()->SetQuestNeedCreatures();
                                 break;
                             }
                     }
@@ -517,7 +563,7 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
             for (PlayerBotMap::const_iterator it = GetPlayerBotsBegin(); it != GetPlayerBotsEnd(); ++it)
             {
 
-                uint32 choice = urand(0, 3);    //returns 0,1,2 or 3
+                uint32 choice;
 
                 Player* const bot = it->second;
                 if (!bot)
@@ -526,6 +572,8 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
                 Group* group = bot->GetGroup();
                 if (!group)
                     return;
+
+                (bot->GetPlayerbotAI()->CanStore()) ? choice = urand(0, 3) : choice = 0;  // pass = 0, need = 1, greed = 2, disenchant = 3
 
                 group->CountRollVote(bot, Guid, NumberOfPlayers, RollVote(choice));
 
@@ -641,12 +689,12 @@ void PlayerbotMgr::HandleMasterIncomingPacket(const WorldPacket& packet)
             ObjectGuid npcGUID;
             p >> npcGUID;
 
-            Object* const pNpc = (WorldObject*) m_master->GetObjectByTypeMask(npcGUID, TYPEMASK_CREATURE_OR_GAMEOBJECT);
+            Object* const pNpc = (WorldObject *) m_master->GetObjectByTypeMask(npcGUID, TYPEMASK_CREATURE_OR_GAMEOBJECT);
             if (!pNpc)
                 return;
 
             // for all master's bots
-            for(PlayerBotMap::const_iterator it = GetPlayerBotsBegin(); it != GetPlayerBotsEnd(); ++it)
+            for (PlayerBotMap::const_iterator it = GetPlayerBotsBegin(); it != GetPlayerBotsEnd(); ++it)
             {
                 Player* const bot = it->second;
                 if (!bot->IsInMap(static_cast<WorldObject *>(pNpc)))
@@ -732,6 +780,7 @@ void PlayerbotMgr::LogoutAllBots()
         Player* bot = itr->second;
         LogoutPlayerBot(bot->GetObjectGuid());
     }
+    RemoveAllBotsFromGroup();
 }
 
 void PlayerbotMgr::Stay()
@@ -869,20 +918,19 @@ void Player::MakeTalentGlyphLink(std::ostringstream &out)
     // |cff4e96f7|Htalent:1396:4|h[Unleashed Fury]|h|r
     // |cff66bbff|Hglyph:23:460|h[Glyph of Fortitude]|h|r
 
-    if(m_specsCount)
-    {
+    if (m_specsCount)
         // loop through all specs (only 1 for now)
-        for(uint32 specIdx = 0; specIdx < m_specsCount; ++specIdx)
+        for (uint32 specIdx = 0; specIdx < m_specsCount; ++specIdx)
         {
             // find class talent tabs (all players have 3 talent tabs)
             uint32 const* talentTabIds = GetTalentTabPages(getClass());
 
             out << "\n" << "Active Talents ";
 
-            for(uint32 i = 0; i < 3; ++i)
+            for (uint32 i = 0; i < 3; ++i)
             {
                 uint32 talentTabId = talentTabIds[i];
-                for(PlayerTalentMap::iterator iter = m_talents[specIdx].begin(); iter != m_talents[specIdx].end(); ++iter)
+                for (PlayerTalentMap::iterator iter = m_talents[specIdx].begin(); iter != m_talents[specIdx].end(); ++iter)
                 {
                     PlayerTalent talent = (*iter).second;
 
@@ -890,15 +938,15 @@ void Player::MakeTalentGlyphLink(std::ostringstream &out)
                         continue;
 
                     // skip another tab talents
-                    if(talent.talentEntry->TalentTab != talentTabId)
+                    if (talent.talentEntry->TalentTab != talentTabId)
                         continue;
 
-                    TalentEntry const* talentInfo = sTalentStore.LookupEntry( talent.talentEntry->TalentID );
+                    TalentEntry const* talentInfo = sTalentStore.LookupEntry(talent.talentEntry->TalentID);
 
                     SpellEntry const* spell_entry = sSpellStore.LookupEntry(talentInfo->RankID[talent.currentRank]);
 
                     out << "|cff4e96f7|Htalent:" << talent.talentEntry->TalentID << ":" << talent.currentRank
-                    << " |h[" << spell_entry->SpellName[GetSession()->GetSessionDbcLocale()] << "]|h|r";
+                        << " |h[" << spell_entry->SpellName[GetSession()->GetSessionDbcLocale()] << "]|h|r";
                 }
             }
 
@@ -906,27 +954,26 @@ void Player::MakeTalentGlyphLink(std::ostringstream &out)
 
             out << " Unspent points : ";
 
-            if((freepoints = GetFreeTalentPoints()) > 0)
+            if ((freepoints = GetFreeTalentPoints()) > 0)
                 out << "|h|cff00ff00" << freepoints << "|h|r";
             else
                 out << "|h|cffff0000" << freepoints << "|h|r";
 
             out << "\n" << "Active Glyphs ";
             // GlyphProperties.dbc
-            for(uint8 i = 0; i < MAX_GLYPH_SLOT_INDEX; ++i)
+            for (uint8 i = 0; i < MAX_GLYPH_SLOT_INDEX; ++i)
             {
                 GlyphPropertiesEntry const* glyph = sGlyphPropertiesStore.LookupEntry(m_glyphs[specIdx][i].GetId());
-                if(!glyph)
+                if (!glyph)
                     continue;
 
                 SpellEntry const* spell_entry = sSpellStore.LookupEntry(glyph->SpellId);
 
                 out << "|cff66bbff|Hglyph:" << GetGlyphSlot(i) << ":" << m_glyphs[specIdx][i].GetId()
-                << " |h[" << spell_entry->SpellName[GetSession()->GetSessionDbcLocale()] << "]|h|r";
+                    << " |h[" << spell_entry->SpellName[GetSession()->GetSessionDbcLocale()] << "]|h|r";
 
             }
         }
-    }
 }
 
 void Player::chompAndTrim(std::string& str)
@@ -941,13 +988,13 @@ void Player::chompAndTrim(std::string& str)
     }
 
 	while (str.length() > 0)
-    {
-        char lc = str[0];
-        if (lc == ' ' || lc == '"' || lc == '\'')
-            str = str.substr(1, str.length() - 1);
-        else
-            break;
-    }
+	{
+		char lc = str[0];
+		if (lc == ' ' || lc == '"' || lc == '\'')
+			str = str.substr(1, str.length() - 1);
+		else
+			break;
+	}
 }
 
 bool Player::getNextQuestId(const std::string& pString, unsigned int& pStartPos, unsigned int& pId)
