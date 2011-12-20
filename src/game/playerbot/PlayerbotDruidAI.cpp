@@ -79,31 +79,31 @@ bool PlayerbotDruidAI::HealTarget(Unit *target)
     PlayerbotAI* ai = GetAI();
     uint8 hp = target->GetHealth() * 100 / target->GetMaxHealth();
 
-    if (hp >= 95)
+    if (hp >= 50)
         return false;
 
     // Reset form if needed
     GoBuffForm(GetPlayerBot());
 
-    if (hp < 94 && REJUVENATION > 0 && !target->HasAura(REJUVENATION) && ai->CastSpell(REJUVENATION, *target))
+    if (hp < 50 && REJUVENATION > 0 && !target->HasAura(REJUVENATION) && ai->CastSpell(REJUVENATION, *target))
         return true;
 
-    if (hp < 92 && LIFEBLOOM > 0 && !target->HasAura(LIFEBLOOM) && ai->CastSpell(LIFEBLOOM, *target))
+    if (hp < 50 && LIFEBLOOM > 0 && !target->HasAura(LIFEBLOOM) && ai->CastSpell(LIFEBLOOM, *target))
         return true;
 
-    if (hp < 95 && REGROWTH > 0 && !target->HasAura(REGROWTH) && ai->CastSpell(REGROWTH, *target))
+    if (hp < 50 && REGROWTH > 0 && !target->HasAura(REGROWTH) && ai->CastSpell(REGROWTH, *target))
         return true;
 
     if (hp < 50 && SWIFTMEND > 0 && (target->HasAura(REJUVENATION) || target->HasAura(REGROWTH)) && ai->CastSpell(SWIFTMEND, *target))
         return true;
 
-    if (hp < 80 && WILD_GROWTH > 0 && !target->HasAura(WILD_GROWTH) && ai->CastSpell(WILD_GROWTH, *target))
+    if (hp < 50 && WILD_GROWTH > 0 && !target->HasAura(WILD_GROWTH) && ai->CastSpell(WILD_GROWTH, *target))
         return true;
 
-    if (hp < 65 && NOURISH > 0 && ai->CastSpell(NOURISH, *target))
+    if (hp < 50 && NOURISH > 0 && ai->CastSpell(NOURISH, *target))
         return true;
 
-    if (hp < 82 && HEALING_TOUCH > 0 && ai->CastSpell(HEALING_TOUCH, *target))
+    if (hp < 50 && HEALING_TOUCH > 0 && ai->CastSpell(HEALING_TOUCH, *target))
         return true;
 
     return false;
