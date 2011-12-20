@@ -79,7 +79,7 @@ bool PlayerbotDruidAI::HealTarget(Unit *target)
     PlayerbotAI* ai = GetAI();
     uint8 hp = target->GetHealth() * 100 / target->GetMaxHealth();
 
-    if (hp >= 70)
+    if (hp >= 95)
         return false;
 
     // Reset form if needed
