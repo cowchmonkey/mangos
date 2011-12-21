@@ -275,51 +275,28 @@ void PlayerbotWarriorAI::DoNextCombatManeuver(Unit *pTarget)
 
         case WarriorDefensive:
             out << "Case Defensive";
-            if (DISARM > 0 && ai->GetRageAmount() >= 15 && !pTarget->HasAura(DISARM, EFFECT_INDEX_0) && LastSpellTank == 3)
-            {
-              ai->CastSpell(DISARM, *pTarget);
-              ai->TellMaster("Spell -> Disarm"); 
-              LastSpellTank = LastSpellTank + 1;  
-                
-           }
-            else if (SUNDER_ARMOR > 0 && ai->GetRageAmount() >= 15   && LastSpellTank == 4  )
-            {
-              ai->CastSpell(SUNDER_ARMOR, *pTarget);
-              ai->TellMaster("Spell -> Sunder Armor"); 
-              LastSpellTank = LastSpellTank + 1;  
-            }
-            else if (REVENGE > 0 && ai->GetRageAmount() >= 5  && ai->CastSpell(REVENGE, *pTarget)  && LastSpellTank == 4  ) 
-            {
-              ai->TellMaster("Spell -> Revenge");
-              LastSpellTank = LastSpellTank + 1;  
-            }
-            else if (SHIELD_BLOCK > 0 && !m_bot->HasAura(SHIELD_BLOCK, EFFECT_INDEX_0)  && LastSpellTank == 5  )
-            {
-              ai->CastSpell(SHIELD_BLOCK, *m_bot);
-              ai->TellMaster("Spell -> Shield Block"); 
-              LastSpellTank = LastSpellTank + 1;  
-            }
-            else if (SHIELD_WALL > 0 && !m_bot->HasAura(SHIELD_WALL, EFFECT_INDEX_0) &&  LastSpellTank == 5  )
-            {
-              ai->CastSpell(SHIELD_WALL, *m_bot);
-              ai->TellMaster("Spell -> Shield Wall"); 
-              LastSpellTank = LastSpellTank + 1;  
-            }
-            else if ( SHIELD_SLAM > 0 && ai->GetRageAmount() >= 20 && LastSpellTank == 6    )
-            {
-              ai->CastSpell(SHIELD_SLAM, *pTarget);
-              ai->TellMaster("Spell -> Shield Slam"); 
-              LastSpellTank = LastSpellTank + 1;  
-            }
-            //Try to spam a heroic_strike..
-            else if (HEROIC_STRIKE > 0 && ai->GetRageAmount() >= 15  ) 
-            {
-              ai->CastSpell(HEROIC_STRIKE, *pTarget);
-              ai->TellMaster("Spell -> Heroic Strike"); 
-              LastSpellTank = LastSpellTank + 1;  
-            }
-            if (LastSpellTank > 6)
-                LastSpellTank = 0;
+            if (DISARM > 0 && ai->GetRageAmount() >= 15 && !pTarget->HasAura(DISARM, EFFECT_INDEX_0) && ai->CastSpell(DISARM, *pTarget))
+                out << " > Disarm";
+			else if (THUNDER_CLAP > 0 && ai->GetRageAmount() >= 20 && ai->CastSpell(THUNDER_CLAP, *pTarget))
+				out << " > Thunder Clap";
+            else if (SUNDER_ARMOR > 0 && ai->GetRageAmount() >= 15 && ai->CastSpell(SUNDER_ARMOR, *pTarget))
+                out << " > Sunder Armor";
+			else if (DEVASTATE > 0 && ai->GetRageAmount() >= 15 && ai->CastSpell(DEVASTATE, *pTarget))
+				out << " > Devastate";
+            else if (REVENGE > 0 && ai->GetRageAmount() >= 5 && ai->CastSpell(REVENGE, *pTarget))
+                out << " > Revenge";
+			else if (SHIELD_SLAM > 0 && ai->GetRageAmount() >= 5 && ai->CastSpell(SHIELD_SLAM, *pTarget))
+                out << " > Shield Slam";
+			else if (SHOCKWAVE > 0 && ai->GetRageAmount() >= 5 && ai->CastSpell(SHOCKWAVE, *pTarget))
+                out << " > Shockwave";
+            else if (SHIELD_BLOCK > 0 && !m_bot->HasAura(SHIELD_BLOCK, EFFECT_INDEX_0) && ai->CastSpell(SHIELD_BLOCK, *m_bot))
+                out << " > Shield Block";
+            else if (SHIELD_WALL > 0 && !m_bot->HasAura(SHIELD_WALL, EFFECT_INDEX_0) && ai->CastSpell(SHIELD_WALL, *m_bot))
+                out << " > Shield Wall";
+			else if (HEROIC_STRIKE > 0 && ai->GetRageAmount() >=30 && ai->CastSpell(HEROIC_STRIKE, *pTarget))
+				out << " > Heroic Strike";
+            else
+                out << " > NONE";
             break;
 
         case WarriorBerserker:
