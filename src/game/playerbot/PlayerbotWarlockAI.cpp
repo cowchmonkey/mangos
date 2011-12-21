@@ -173,15 +173,15 @@ void PlayerbotWarlockAI::DoNextCombatManeuver(Unit *pTarget)
                 SpellSequence = SPELL_DESTRUCTION;
                 ++LastSpellAffliction;
                 break;
-            }
-            else if (DRAIN_SOUL && pTarget->GetHealth() < pTarget->GetMaxHealth() * 0.40 && !pTarget->HasAura(DRAIN_SOUL) && LastSpellAffliction < 3)
-            {
-                ai->CastSpell(DRAIN_SOUL, *pTarget);
+            }//tired of the dam lock casting soul drain
+            //else if (DRAIN_SOUL && pTarget->GetHealth() < pTarget->GetMaxHealth() * 0.40 && !pTarget->HasAura(DRAIN_SOUL) && LastSpellAffliction < 3)
+            //{//
+                //ai->CastSpell(DRAIN_SOUL, *pTarget);
                 //ai->SetIgnoreUpdateTime(15);
-                SpellSequence = SPELL_DESTRUCTION;
-                ++LastSpellAffliction;
-                break;
-            }
+               // SpellSequence = SPELL_DESTRUCTION;
+               // ++LastSpellAffliction;
+               // break;
+            //}//
             else if (DRAIN_LIFE && LastSpellAffliction < 4 && !pTarget->HasAura(DRAIN_SOUL) && !pTarget->HasAura(SEED_OF_CORRUPTION) && !pTarget->HasAura(DRAIN_LIFE) && !pTarget->HasAura(DRAIN_MANA) && ai->GetHealthPercent() <= 70)
             {
                 ai->CastSpell(DRAIN_LIFE, *pTarget);
@@ -218,16 +218,16 @@ void PlayerbotWarlockAI::DoNextCombatManeuver(Unit *pTarget)
                 SpellSequence = SPELL_DESTRUCTION;
                 ++LastSpellAffliction;
                 break;
-            }
-            else if (FEAR && !pTarget->HasAura(FEAR) && pVictim == m_bot && ai->GetAttackerCount() >= 2 && LastSpellAffliction < 9)
-            {
-                ai->CastSpell(FEAR, *pTarget);
+            }	//dont like bots fearing into otehr crap 
+            //else if (FEAR && !pTarget->HasAura(FEAR) && pVictim == m_bot && ai->GetAttackerCount() >= 2 && LastSpellAffliction < 9)
+            //{
+             //   ai->CastSpell(FEAR, *pTarget);
                 //ai->TellMaster("casting fear!");
                 //ai->SetIgnoreUpdateTime(1.5);
-                SpellSequence = SPELL_DESTRUCTION;
-                ++LastSpellAffliction;
-                break;
-            }
+               // SpellSequence = SPELL_DESTRUCTION;
+                //++LastSpellAffliction;
+               // break;
+            //}//
             else if ((pet)
                      && (DARK_PACT > 0 && ai->GetManaPercent() <= 50 && LastSpellAffliction < 10 && pet->GetPower(POWER_MANA) > 0))
             {

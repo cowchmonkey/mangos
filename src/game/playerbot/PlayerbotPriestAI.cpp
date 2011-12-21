@@ -74,20 +74,24 @@ bool PlayerbotPriestAI::HealTarget(Unit* target)
     uint8 hp = target->GetHealth() * 100 / target->GetMaxHealth();
     uint8 hpSelf = GetAI()->GetHealthPercent();
 
-    if (hp >= 80)
+    if (hp >= 90)
         return false;
-
-    if (hp < 30 && FLASH_HEAL > 0 && ai->CastSpell(FLASH_HEAL, *target))
+		
+	if (hp < 85 && POWER_WORD_SHIELD > 0 && ai->CastSpell(POWER_WORD_SHIELD, *target))
+		return true;
+	else if (hp < 80 && RENEW > 0 && !target->HasAura(RENEW) && ai->CastSpell(RENEW, *target))
+        return true;	
+    else if (hp < 55 && FLASH_HEAL > 0 && ai->CastSpell(FLASH_HEAL, *target))
         return true;
-    else if (hp < 40 && GREATER_HEAL > 0 && ai->CastSpell(GREATER_HEAL, *target))
+    else if (hp < 50 && GREATER_HEAL > 0 && ai->CastSpell(GREATER_HEAL, *target))
         return true;
     // Heals target AND self for equal amount
     else if (hp < 60 && hpSelf < 80 && BINDING_HEAL > 0 && ai->CastSpell(BINDING_HEAL, *target))
         return true;
-    else if (hp < 60 && HEAL > 0 && ai->CastSpell(HEAL, *target))
+    else if (hp < 70 && HEAL > 0 && ai->CastSpell(HEAL, *target))
         return true;
-    else if (hp < 80 && RENEW > 0 && !target->HasAura(RENEW) && ai->CastSpell(RENEW, *target))
-        return true;
+    //else if (hp < 80 && RENEW > 0 && !target->HasAura(RENEW) && ai->CastSpell(RENEW, *target))
+        //return true;      //maybe try later to add it back and see if bot will use it agian
     else
         return false;
 } // end HealTarget
@@ -125,7 +129,7 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
         ai->CastSpell(FADE, *m_bot);
     }
     // Heal myself
-    else if (ai->GetHealthPercent() < 25 && POWER_WORD_SHIELD > 0 && !m_bot->HasAura(POWER_WORD_SHIELD, EFFECT_INDEX_0))
+    else if (ai->GetHealthPercent() < 65 && POWER_WORD_SHIELD > 0 && !m_bot->HasAura(POWER_WORD_SHIELD, EFFECT_INDEX_0))
     {
         ai->TellMaster("I'm casting PW:S on myself.");
         ai->CastSpell(POWER_WORD_SHIELD);
@@ -142,9 +146,9 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
     uint32 masterHP = GetMaster()->GetHealth() * 100 / GetMaster()->GetMaxHealth();
     if (GetMaster()->isAlive())
     {
-        if (masterHP < 25 && POWER_WORD_SHIELD > 0 && !GetMaster()->HasAura(POWER_WORD_SHIELD, EFFECT_INDEX_0))
+        if (masterHP < 50 && POWER_WORD_SHIELD > 0 && !GetMaster()->HasAura(POWER_WORD_SHIELD, EFFECT_INDEX_0))
             ai->CastSpell(POWER_WORD_SHIELD, *(GetMaster()));
-        else if (masterHP < 25 || ((GetAI()->GetCombatOrder() & PlayerbotAI::ORDERS_HEAL) && masterHP < 80))
+        else if (masterHP < 50 || ((GetAI()->GetCombatOrder() & PlayerbotAI::ORDERS_HEAL) && masterHP < 80))
             HealTarget(GetMaster());
     }
 
@@ -284,13 +288,13 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
             break;
 
         case SPELL_DISCIPLINE:
-            if (FEAR_WARD > 0 && LastSpellDiscipline < 1 && ai->GetManaPercent() >= 3)
-            {
+            //if (FEAR_WARD > 0 && LastSpellDiscipline < 1 && ai->GetManaPercent() >= 3)
+            //{
                 //ai->TellMaster("I'm casting fear ward");
-                ai->CastSpell(FEAR_WARD, *(GetMaster()));
-                LastSpellDiscipline = LastSpellDiscipline + 1;
-            }
-            else if (POWER_INFUSION > 0 && LastSpellDiscipline < 2 && ai->GetManaPercent() >= 16)
+                //ai->CastSpell(FEAR_WARD, *(GetMaster()));
+                //LastSpellDiscipline = LastSpellDiscipline + 1;
+            //}
+            if (POWER_INFUSION > 0 && LastSpellDiscipline < 2 && ai->GetManaPercent() >= 16)    // out "else" back if u add fear ward back in
             {
                 //ai->TellMaster("I'm casting power infusion");
                 ai->CastSpell(POWER_INFUSION, *(GetMaster()));
