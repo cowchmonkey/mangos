@@ -46,7 +46,6 @@ For a full list of commands, use '/t BOTNAME help' or various subcommands e.g. '
 /t BOTNAME use [ITEM LINK][GAMEOBJECT LINK] (use item on gameobject )
 /t BOTNAME equip [ITEM LINK]
 /t BOTNAME reset (will reset states, orders and loot list)
-/t BOTNAME report (bot reports all items, creatures or gameobjects needed to finish quests)
 /t BOTNAME stats (bot shows available money, free inventory space and estimated item repair costs)
 /t BOTNAME survey (bot shows all available gameobjects, within a local perimeter around the bot)
 /t BOTNAME find [GAMEOBJECT LINK] (bot will travel to the gameobject location and then wait)
@@ -56,6 +55,7 @@ For a full list of commands, use '/t BOTNAME help' or various subcommands e.g. '
 /t BOTNAME quest <(d)rop> [QUESTLINK] (Drop a quest)
 /t BOTNAME quest <(e)nd> (Turns in a completed quest)
 /t BOTNAME quest <(l)ist> (Shows new quests offered by questgiver)
+/t BOTNAME quest <(r)eport> (bot reports all items, creatures or gameobjects needed to finish quests)
 /t BOTNAME orders (Shows bot's combat orders)
 /t BOTNAME pet spells (Shows spells known to bot's pet. Autocast spells will be shown in green)
 /t BOTNAME pet cast <SPELLID | (part of) SPELLNAME | [SPELLLINK]>
