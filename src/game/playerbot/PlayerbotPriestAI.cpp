@@ -81,16 +81,16 @@ bool PlayerbotPriestAI::HealTarget(Unit* target)
 		return true;
 	else if (hp < 80 && RENEW > 0 && !target->HasAura(RENEW) && ai->CastSpell(RENEW, *target))
         return true;	
-    else if (hp < 55 && FLASH_HEAL > 0 && ai->CastSpell(FLASH_HEAL, *target))
+    else if (hp < 78 && FLASH_HEAL > 0 && ai->CastSpell(FLASH_HEAL, *target))
         return true;
-    else if (hp < 50 && GREATER_HEAL > 0 && ai->CastSpell(GREATER_HEAL, *target))
+    else if (hp < 65 && GREATER_HEAL > 0 && ai->CastSpell(GREATER_HEAL, *target))
         return true;
     // Heals target AND self for equal amount
     else if (hp < 60 && hpSelf < 80 && BINDING_HEAL > 0 && ai->CastSpell(BINDING_HEAL, *target))
         return true;
-    else if (hp < 70 && HEAL > 0 && ai->CastSpell(HEAL, *target))
+    else if (hp < 75 && HEAL > 0 && ai->CastSpell(HEAL, *target))
         return true;
-	else if (hp < 50 && LESSER_HEAL > 0 && ai->CastSpell(LESSER_HEAL, *target))
+	else if (hp < 75 && LESSER_HEAL > 0 && ai->CastSpell(LESSER_HEAL, *target))
 		return true;
     //else if (hp < 80 && RENEW > 0 && !target->HasAura(RENEW) && ai->CastSpell(RENEW, *target))
         //return true;      //maybe try later to add it back and see if bot will use it agian
