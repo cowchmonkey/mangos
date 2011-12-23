@@ -277,9 +277,15 @@ void PlayerbotWarriorAI::DoNextCombatManeuver(Unit *pTarget)
             out << "Case Defensive";
             if (DISARM > 0 && ai->GetRageAmount() >= 15 && !pTarget->HasAura(DISARM, EFFECT_INDEX_0) && ai->CastSpell(DISARM, *pTarget))
                 out << " > Disarm";
+			else if (SUNDER_ARMOR > 0 && ai->GetRageAmount() >= 0 && ai->CastSpell(SUNDER_ARMOR, *pTarget))
+                out << " > Sunder Armor";
 			else if (THUNDER_CLAP > 0 && ai->GetRageAmount() >= 20 && ai->CastSpell(THUNDER_CLAP, *pTarget))
 				out << " > Thunder Clap";
-            else if (SUNDER_ARMOR > 0 && ai->GetRageAmount() >= 15 && ai->CastSpell(SUNDER_ARMOR, *pTarget))
+            else if (SUNDER_ARMOR > 0 && ai->GetRageAmount() >= 0 && ai->CastSpell(SUNDER_ARMOR, *pTarget))
+                out << " > Sunder Armor";
+			else if (SUNDER_ARMOR > 0 && ai->GetRageAmount() >= 0 && ai->CastSpell(SUNDER_ARMOR, *pTarget))
+                out << " > Sunder Armor";
+			else if (SUNDER_ARMOR > 0 && ai->GetRageAmount() >= 0 && ai->CastSpell(SUNDER_ARMOR, *pTarget))
                 out << " > Sunder Armor";
 			else if (DEVASTATE > 0 && ai->GetRageAmount() >= 15 && ai->CastSpell(DEVASTATE, *pTarget))
 				out << " > Devastate";

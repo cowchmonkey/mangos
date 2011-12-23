@@ -6,7 +6,8 @@
 enum
 {
     Combat,
-    Healing
+    Tanking,
+	Healing
 };
 
 enum PaladinSpells

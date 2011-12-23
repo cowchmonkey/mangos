@@ -1,12 +1,12 @@
 /*
    Name    : PlayerbotPaladinAI.cpp
    Complete: maybe around 27% :D
-   Author  : Natsukawa
+   Author  : Cowchmonkey
    Version : 0.35
  */
 
 #include "PlayerbotPaladinAI.h"
-#include "PlayerbotMgr.h"
+//#include "PlayerbotMgr.h" test to see what happens what i remove it 
 
 class PlayerbotAI;
 
@@ -29,7 +29,9 @@ PlayerbotPaladinAI::PlayerbotPaladinAI(Player* const master, Player* const bot, 
     BLESSING_OF_MIGHT             = ai->initSpell(BLESSING_OF_MIGHT_1);
     GREATER_BLESSING_OF_MIGHT     = ai->initSpell(GREATER_BLESSING_OF_MIGHT_1);
     HAMMER_OF_WRATH               = ai->initSpell(HAMMER_OF_WRATH_1);
-    FLASH_OF_LIGHT                = ai->initSpell(FLASH_OF_LIGHT_1); // Holy
+    
+	//HOLY
+	FLASH_OF_LIGHT                = ai->initSpell(FLASH_OF_LIGHT_1); 
     HOLY_LIGHT                    = ai->initSpell(HOLY_LIGHT_1);
     HOLY_SHOCK                    = ai->initSpell(HOLY_SHOCK_1);
     HOLY_WRATH                    = ai->initSpell(HOLY_WRATH_1);
@@ -66,9 +68,10 @@ PlayerbotPaladinAI::PlayerbotPaladinAI(Player* const master, Player* const bot, 
     REDEMPTION                    = ai->initSpell(REDEMPTION_1);
 
     // Warrior auras
-    DEFENSIVE_STANCE              = 71;   //Def Stance
-    BERSERKER_STANCE              = 2458; //Ber Stance
-    BATTLE_STANCE                 = 2457; //Bat Stance
+	//see if this next part is really needed
+    //DEFENSIVE_STANCE              = 71;   //Def Stance
+    //BERSERKER_STANCE              = 2458; //Ber Stance
+    //BATTLE_STANCE                 = 2457; //Bat Stance
 
     FORBEARANCE                   = 25771; // cannot be protected
 
@@ -92,17 +95,21 @@ bool PlayerbotPaladinAI::HealTarget(Unit *target)
 {
     PlayerbotAI* ai = GetAI();
     uint8 hp = target->GetHealth() * 100 / target->GetMaxHealth();
+	uint8 hpself =GetAI()->GetHealthPercent();
+	
+	if (hp >= 95)
+		return false;
 
     if (hp < 25 && ai->CastSpell(LAY_ON_HANDS, *target))
+        return true; //test to maybe see if i really need the first "spell > 0"
+
+    if (hp < 55 && ai->CastSpell(FLASH_OF_LIGHT, *target))
         return true;
 
-    if (hp < 30 && ai->CastSpell(FLASH_OF_LIGHT, *target))
+    if (hp < 65 && ai->CastSpell(HOLY_SHOCK, *target))
         return true;
 
-    if (hp < 35 && ai->CastSpell(HOLY_SHOCK, *target))
-        return true;
-
-    if (hp < 40 && ai->CastSpell(HOLY_LIGHT, *target))
+    if (hp < 75 && ai->CastSpell(HOLY_LIGHT, *target))
         return true;
 
     return false;
@@ -116,13 +123,15 @@ void PlayerbotPaladinAI::DoNextCombatManeuver(Unit *pTarget)
         return;
 
     switch (ai->GetScenarioType())
-    {
+    {	//add later full duel setup kinda like pvp setup
         case PlayerbotAI::SCENARIO_DUEL:
             if (HAMMER_OF_JUSTICE > 0)
                 ai->CastSpell(HAMMER_OF_JUSTICE);
             return;
     }
 
+	// ----------Non Duel combat ---------
+	
     // damage spells
     Player *m_bot = GetPlayerBot();
     Group *m_group = m_bot->GetGroup();
@@ -152,7 +161,7 @@ void PlayerbotPaladinAI::DoNextCombatManeuver(Unit *pTarget)
                     return;
         }
     }
-
+		//--------auras---------
     if (RIGHTEOUS_FURY > 0 && !m_bot->HasAura(RIGHTEOUS_FURY, EFFECT_INDEX_0))
         ai->CastSpell (RIGHTEOUS_FURY, *m_bot);
 
@@ -179,12 +188,53 @@ void PlayerbotPaladinAI::DoNextCombatManeuver(Unit *pTarget)
 
     if (ai->GetHealthPercent() <= 40 || GetMaster()->GetHealth() <= GetMaster()->GetMaxHealth() * 0.4)
         SpellSequence = Healing;
-    else
-        SpellSequence = Combat;
-
+    else if (ai->GetCombatOrder() == PlayerbotAI::ORDERS_HEAL)
+        SpellSequence = Healing;
+	else if (ai->GetCombatOrder() == PlayerbotAI::ORDERS_TANK)
+        SpellSequence = Tanking;
+	else if (ai->GetCombatOrder() == PlayerbotAI::ORDERS_ASSIST)
+		SpellSequence = Combat;
+	else
+		SpellSequence = Combat;
+        
+		
     switch (SpellSequence)
     {
-        case Combat:
+        case Tanking:  //prot rotation
+			if (JUDGEMENT_OF_LIGHT > 0 && !pTarget->HasAura(JUDGEMENT_OF_LIGHT, EFFECT_INDEX_0) && CombatCounter < 1 && ai->GetManaPercent() >= 5)
+            {
+                ai->CastSpell (JUDGEMENT_OF_LIGHT, *pTarget);
+                out << " Judgement of Light";
+                CombatCounter++;
+                break;
+            }
+			else if (DIVINE_PLEA > 0 && !m_bot->HasAura(DIVINE_PLEA, EFFECT_INDEX_0) && ai->GetManaPercent() < 50 && CombatCounter < 2)
+            {
+                ai->CastSpell (DIVINE_PLEA, *m_bot);
+                out << " Divine Plea";
+                CombatCounter++;
+                break;
+            }
+			else if (CONSECRATION > 0 && CombatCounter < 3 && ai->GetManaPercent() >= 10)
+			{
+				ai->CastSpell (CONSECRATION, *pTarget);
+				out << " Consecration";
+				CombatCounter++;
+				break;
+			}
+			else if (CombatCounter > 4)
+            {
+                CombatCounter = 0;
+                //ai->TellMaster("CombatCounter Reset");
+                break;
+            }
+            else
+            {
+                CombatCounter = 0;
+                //ai->TellMaster("Counter = 0");
+                break;
+            }			
+		case Combat: //ret stuff
             if (JUDGEMENT_OF_LIGHT > 0 && !pTarget->HasAura(JUDGEMENT_OF_LIGHT, EFFECT_INDEX_0) && CombatCounter < 1 && ai->GetManaPercent() >= 5)
             {
                 ai->CastSpell (JUDGEMENT_OF_LIGHT, *pTarget);
@@ -296,7 +346,7 @@ void PlayerbotPaladinAI::DoNextCombatManeuver(Unit *pTarget)
                 break;
             }
 
-        case Healing:
+        case Healing: // holy rotation
             if (ai->GetHealthPercent() <= 40)
             {
                 HealTarget (m_bot);
