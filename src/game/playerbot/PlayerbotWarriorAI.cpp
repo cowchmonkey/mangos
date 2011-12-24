@@ -38,7 +38,8 @@ PlayerbotWarriorAI::PlayerbotWarriorAI(Player* const master, Player* const bot, 
     SHIELD_WALL             = ai->initSpell(SHIELD_WALL_1); //PROTECTION
     SHIELD_SLAM             = ai->initSpell(SHIELD_SLAM_1); //PROTECTION
     VIGILANCE               = ai->initSpell(VIGILANCE_1); //PROTECTION
-    //DEVASTATE               = ai->initSpell(DEVASTATE_1); //PROTECTION         in here twice un comment if it causes errors
+    DEVASTATE               = ai->initSpell(DEVASTATE_1); //PROTECTION 
+	(DEVASTATE > 0) ? DEVASTATE : DEVASTATE = SUNDER_ARMOR;	//in here twice un comment if it causes errors
     SHOCKWAVE               = ai->initSpell(SHOCKWAVE_1); //PROTECTION
     CONCUSSION_BLOW         = ai->initSpell(CONCUSSION_BLOW_1); //PROTECTION
     SPELL_REFLECTION        = ai->initSpell(SPELL_REFLECTION_1); //PROTECTION
@@ -276,10 +277,61 @@ void PlayerbotWarriorAI::DoNextCombatManeuver(Unit *pTarget)
             break;
 
         case WarriorDefensive:
-			out << "Case Defensive";
+			if (DISARM > 0 && ai->GetRageAmount() >= 15 && !pTarget->HasAura(DISARM, EFFECT_INDEX_0) && LastSpellTank == 1)
+            {
+              ai->CastSpell(DISARM, *pTarget);
+              ai->TellMaster("Spell -> Disarm"); 
+              LastSpellTank = LastSpellTank + 1;  
+                
+            }
+            else if (SUNDER_ARMOR > 0 && ai->GetRageAmount() >= 15   && LastSpellTank == 2)
+            {
+              ai->CastSpell(SUNDER_ARMOR, *pTarget);
+              ai->TellMaster("Spell -> Sunder Armor"); 
+              LastSpellTank = LastSpellTank + 1;  
+            }
+			else if (THUNDER_CLAP > 0 && ai->GetRageAmount() >= 15 && LastSpellTank == 3)
+			{
+			 ai->CastSpell(THUNDER_CLAP, *pTarget);
+			 ai->TellMaster("Spell -> Thunder Claps");
+			 LastSpellTank =LastSpellTank + 1;
+			}
+            else if (REVENGE > 0 && ai->GetRageAmount() >= 5  && ai->CastSpell(REVENGE, *pTarget)  && LastSpellTank == 4  ) 
+            {
+              ai->TellMaster("Spell -> Revenge");
+              LastSpellTank = LastSpellTank + 1;  
+            }
+            else if (SHIELD_BLOCK > 0 && !m_bot->HasAura(SHIELD_BLOCK, EFFECT_INDEX_0)  && LastSpellTank == 5  )
+            {
+              ai->CastSpell(SHIELD_BLOCK, *m_bot);
+              ai->TellMaster("Spell -> Shield Block"); 
+              LastSpellTank = LastSpellTank + 1;  
+            }
+            else if (SHIELD_WALL > 0 && !m_bot->HasAura(SHIELD_WALL, EFFECT_INDEX_0) &&  LastSpellTank == 6  )
+            {
+              ai->CastSpell(SHIELD_WALL, *m_bot);
+              ai->TellMaster("Spell -> Shield Wall"); 
+              LastSpellTank = LastSpellTank + 1;  
+            }
+            else if ( SHIELD_SLAM > 0 && ai->GetRageAmount() >= 20 && LastSpellTank == 7)
+            {
+              ai->CastSpell(SHIELD_SLAM, *pTarget);
+              ai->TellMaster("Spell -> Shield Slam"); 
+              LastSpellTank = LastSpellTank + 1;  
+            }
+            //Try to spam a heroic_strike..
+            else if (HEROIC_STRIKE > 0 && ai->GetRageAmount() >= 15  && LastSpellTank == 8) 
+            {
+              ai->CastSpell(HEROIC_STRIKE, *pTarget);
+              ai->TellMaster("Spell -> Heroic Strike"); 
+              LastSpellTank = LastSpellTank + 1;  
+            }
+            if (LastSpellTank > 10)
+                LastSpellTank = 0;
+		/*	out << "Case Defensive";
             if (BLOODRAGE > 0 && ai->GetRageAmount() >= 0 && !pTarget->HasAura(BLOODRAGE, EFFECT_INDEX_0) && ai->CastSpell(BLOODRAGE, *pTarget))
                 out << " > Bloodrage";
-			else if (TAUNT > 0 && ai->GetRageAmount() >= 0 && ai->CastSpell(TAUNT, *pTarget))
+			else if (SUNDER_ARMOR > 0 && ai->GetRageAmount() >= 0 && ai->CastSpell(SUNDER_ARMOR, *pTarget))
                 out << " > Taunt";
 			else if (DEVASTATE > 0 && ai->GetRageAmount() >= 15 && ai->CastSpell(DEVASTATE, *pTarget))
 				out << " > Devastate";
@@ -304,7 +356,7 @@ void PlayerbotWarriorAI::DoNextCombatManeuver(Unit *pTarget)
             else
                 out << " > NONE";
             break;
-
+		*/
         case WarriorBerserker:
             out << "Case Berserker";
             if (WHIRLWIND > 0 && ai->GetRageAmount() >= 25 && ai->CastSpell(WHIRLWIND, *pTarget))

@@ -97,7 +97,7 @@ private:
     // racial
     uint32 ARCANE_TORRENT, GIFT_OF_THE_NAARU, STONEFORM, ESCAPE_ARTIST, EVERY_MAN_FOR_HIMSELF, SHADOWMELD, BLOOD_FURY, WAR_STOMP, BERSERKING, WILL_OF_THE_FORSAKEN;
 
-    uint32 SpellSequence;
+    uint32 SpellSequence,LastSpellTank;
 };
 
 #endif
