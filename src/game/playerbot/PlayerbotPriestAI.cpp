@@ -7,11 +7,11 @@ PlayerbotPriestAI::PlayerbotPriestAI(Player* const master, Player* const bot, Pl
     RENEW                         = ai->initSpell(RENEW_1);
     LESSER_HEAL                   = ai->initSpell(LESSER_HEAL_1);
     FLASH_HEAL                    = ai->initSpell(FLASH_HEAL_1);
-    //(FLASH_HEAL > 0) ? FLASH_HEAL : FLASH_HEAL = LESSER_HEAL; i think checks to make sure u have one or the other
+    (FLASH_HEAL > 0) ? FLASH_HEAL : FLASH_HEAL = LESSER_HEAL; //i think checks to make sure u have one or the other
     HEAL                          = ai->initSpell(HEAL_1);
-    //(HEAL > 0) ? HEAL : HEAL = FLASH_HEAL; same as above
+    (HEAL > 0) ? HEAL : HEAL = FLASH_HEAL; //same as above
     GREATER_HEAL                  = ai->initSpell(GREATER_HEAL_1);
-    //(GREATER_HEAL > 0) ? GREATER_HEAL : GREATER_HEAL = HEAL; commented out to see if it makes a diff in healing
+    (GREATER_HEAL > 0) ? GREATER_HEAL : GREATER_HEAL = HEAL; //commented out to see if it makes a diff in healing
     RESURRECTION                  = ai->initSpell(RESURRECTION_1);
     SMITE                         = ai->initSpell(SMITE_1);
     MANA_BURN                     = ai->initSpell(MANA_BURN_1);
@@ -77,17 +77,13 @@ bool PlayerbotPriestAI::HealTarget(Unit* target)
     if (hp >= 95)
         return false;
 		
-	if (hp < 94 && ai->CastSpell(POWER_WORD_SHIELD, *target)) // "&& SPELL_NAME > 0 " removing as a test to see what happens
+	if (hp < 90 && ai->CastSpell(POWER_WORD_SHIELD, *target)) // "&& SPELL_NAME > 0 " removing as a test to see what happens
 		return true;
-	else if (hp < 75 && ai->CastSpell(LESSER_HEAL, *target))
-		return true;
-		else if (hp < 85 && ai->CastSpell(HEAL, *target))
-        return true;
-	else if (hp < 90 && !target->HasAura(RENEW) && ai->CastSpell(RENEW, *target))
+	else if (hp < 95 && !target->HasAura(RENEW) && ai->CastSpell(RENEW, *target))
         return true;	
-    else if (hp < 80 && ai->CastSpell(FLASH_HEAL, *target))
+    else if (hp < 85 && ai->CastSpell(FLASH_HEAL, *target))
         return true;
-    else if (hp < 75 && ai->CastSpell(GREATER_HEAL, *target))
+    else if (hp < 80 && ai->CastSpell(GREATER_HEAL, *target))
         return true;
     // Heals target AND self for equal amount
     else if (hp < 60 && hpSelf < 80 && BINDING_HEAL > 0 && ai->CastSpell(BINDING_HEAL, *target))
@@ -174,9 +170,9 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
                 continue;
 
             uint32 memberHP = m_groupMember->GetHealth() * 100 / m_groupMember->GetMaxHealth();
-            if (memberHP < 70 && POWER_WORD_SHIELD > 0 && !m_groupMember->HasAura(POWER_WORD_SHIELD, EFFECT_INDEX_0))
+            if (memberHP < 80 && POWER_WORD_SHIELD > 0 && !m_groupMember->HasAura(POWER_WORD_SHIELD, EFFECT_INDEX_0))
                 ai->CastSpell(POWER_WORD_SHIELD, *(GetMaster()));
-            else if (memberHP < 90 || ((GetAI()->GetCombatOrder() & PlayerbotAI::ORDERS_HEAL) && memberHP < 95)) //When to start to heal the group
+            else if (memberHP < 80 || ((GetAI()->GetCombatOrder() & PlayerbotAI::ORDERS_HEAL) && memberHP < 90)) //When to start to heal the group
                 HealTarget(m_groupMember);
         }
     }

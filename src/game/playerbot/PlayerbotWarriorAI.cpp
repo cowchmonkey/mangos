@@ -27,6 +27,8 @@ PlayerbotWarriorAI::PlayerbotWarriorAI(Player* const master, Player* const bot, 
     BLOODRAGE               = ai->initSpell(BLOODRAGE_1); //PROTECTION
     DEFENSIVE_STANCE        = ai->initSpell(DEFENSIVE_STANCE_1); //PROTECTION
     DEVASTATE               = ai->initSpell(DEVASTATE_1); //PROTECTION
+	//Devastate to use sunder armor untill warrior gains the talent kinda help clean up code a lil as well 
+	(DEVASTATE > 0) ? DEVASTATE : DEVASTATE = SUNDER_ARMOR;
     SUNDER_ARMOR            = ai->initSpell(SUNDER_ARMOR_1); //PROTECTION
     TAUNT                   = ai->initSpell(TAUNT_1); //PROTECTION
     SHIELD_BASH             = ai->initSpell(SHIELD_BASH_1); //PROTECTION
@@ -36,7 +38,7 @@ PlayerbotWarriorAI::PlayerbotWarriorAI(Player* const master, Player* const bot, 
     SHIELD_WALL             = ai->initSpell(SHIELD_WALL_1); //PROTECTION
     SHIELD_SLAM             = ai->initSpell(SHIELD_SLAM_1); //PROTECTION
     VIGILANCE               = ai->initSpell(VIGILANCE_1); //PROTECTION
-    DEVASTATE               = ai->initSpell(DEVASTATE_1); //PROTECTION
+    //DEVASTATE               = ai->initSpell(DEVASTATE_1); //PROTECTION         in here twice un comment if it causes errors
     SHOCKWAVE               = ai->initSpell(SHOCKWAVE_1); //PROTECTION
     CONCUSSION_BLOW         = ai->initSpell(CONCUSSION_BLOW_1); //PROTECTION
     SPELL_REFLECTION        = ai->initSpell(SPELL_REFLECTION_1); //PROTECTION
@@ -195,7 +197,7 @@ void PlayerbotWarriorAI::DoNextCombatManeuver(Unit *pTarget)
                 out << " > NONE";
             break;
 
-        case WarriorBattle:
+        case WarriorBattle: //cahnge all to tankorder, combatorder
             out << "Case Battle";
             if (EXECUTE > 0 && ai->GetRageAmount() >= 15 && pTarget->GetHealth() < pTarget->GetMaxHealth() * 0.2 && ai->CastSpell(EXECUTE, *pTarget))
                 out << " > Execute!";
@@ -274,33 +276,31 @@ void PlayerbotWarriorAI::DoNextCombatManeuver(Unit *pTarget)
             break;
 
         case WarriorDefensive:
-            out << "Case Defensive";
-            if (DISARM > 0 && ai->GetRageAmount() >= 15 && !pTarget->HasAura(DISARM, EFFECT_INDEX_0) && ai->CastSpell(DISARM, *pTarget))
-                out << " > Disarm";
-			else if (SUNDER_ARMOR > 0 && ai->GetRageAmount() >= 0 && ai->CastSpell(SUNDER_ARMOR, *pTarget))
-                out << " > Sunder Armor";
-			else if (THUNDER_CLAP > 0 && ai->GetRageAmount() >= 20 && ai->CastSpell(THUNDER_CLAP, *pTarget))
-				out << " > Thunder Clap";
-            else if (SUNDER_ARMOR > 0 && ai->GetRageAmount() >= 0 && ai->CastSpell(SUNDER_ARMOR, *pTarget))
-                out << " > Sunder Armor";
-			else if (SUNDER_ARMOR > 0 && ai->GetRageAmount() >= 0 && ai->CastSpell(SUNDER_ARMOR, *pTarget))
-                out << " > Sunder Armor";
-			else if (SUNDER_ARMOR > 0 && ai->GetRageAmount() >= 0 && ai->CastSpell(SUNDER_ARMOR, *pTarget))
-                out << " > Sunder Armor";
+			out << "Case Defensive";
+            if (BLOODRAGE > 0 && ai->GetRageAmount() >= 0 && !pTarget->HasAura(BLOODRAGE, EFFECT_INDEX_0) && ai->CastSpell(BLOODRAGE, *pTarget))
+                out << " > Bloodrage";
+			else if (TAUNT > 0 && ai->GetRageAmount() >= 0 && ai->CastSpell(TAUNT, *pTarget))
+                out << " > Taunt";
 			else if (DEVASTATE > 0 && ai->GetRageAmount() >= 15 && ai->CastSpell(DEVASTATE, *pTarget))
 				out << " > Devastate";
-            else if (REVENGE > 0 && ai->GetRageAmount() >= 5 && ai->CastSpell(REVENGE, *pTarget))
+            else if (THUNDER_CLAP > 0 && ai->GetRageAmount() >= 20 && ai->CastSpell(THUNDER_CLAP, *pTarget))
+                out << " > Thunder clap";
+			else if (REVENGE > 0 && ai->GetRageAmount() >= 5 && ai->CastSpell(REVENGE, *pTarget))
                 out << " > Revenge";
-			else if (SHIELD_SLAM > 0 && ai->GetRageAmount() >= 5 && ai->CastSpell(SHIELD_SLAM, *pTarget))
-                out << " > Shield Slam";
-			else if (SHOCKWAVE > 0 && ai->GetRageAmount() >= 5 && ai->CastSpell(SHOCKWAVE, *pTarget))
+			else if (SHOCKWAVE > 0 && ai->GetRageAmount() >= 20 && ai->CastSpell(SHOCKWAVE, *pTarget))
                 out << " > Shockwave";
+			else if (SHIELD_BASH > 0 && ai->GetRageAmount() >= 15 && ai->CastSpell(SHIELD_BASH, *pTarget))
+				out << " > Shield bash";
+            else if (DEVASTATE > 0 && ai->GetRageAmount() >= 15 && ai->CastSpell(DEVASTATE, *pTarget))
+                out << " > Devastate";
+			else if (HEROIC_STRIKE > 0 && ai->GetRageAmount() >= 50 && ai->CastSpell(HEROIC_STRIKE, *pTarget))
+                out << " > Heroic strike";
+			else if (REND > 0 && ai->GetRageAmount() >= 15 && ai->CastSpell(REND, *pTarget))
+                out << " > Rend";
             else if (SHIELD_BLOCK > 0 && !m_bot->HasAura(SHIELD_BLOCK, EFFECT_INDEX_0) && ai->CastSpell(SHIELD_BLOCK, *m_bot))
                 out << " > Shield Block";
             else if (SHIELD_WALL > 0 && !m_bot->HasAura(SHIELD_WALL, EFFECT_INDEX_0) && ai->CastSpell(SHIELD_WALL, *m_bot))
                 out << " > Shield Wall";
-			else if (HEROIC_STRIKE > 0 && ai->GetRageAmount() >=30 && ai->CastSpell(HEROIC_STRIKE, *pTarget))
-				out << " > Heroic Strike";
             else
                 out << " > NONE";
             break;

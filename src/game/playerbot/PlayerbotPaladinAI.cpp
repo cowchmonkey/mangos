@@ -208,7 +208,7 @@ void PlayerbotPaladinAI::DoNextCombatManeuver(Unit *pTarget)
                 CombatCounter++;
                 break;
             }
-			else if (DIVINE_PLEA > 0 && !m_bot->HasAura(DIVINE_PLEA, EFFECT_INDEX_0) && ai->GetManaPercent() < 50 && CombatCounter < 2)
+			else if (DIVINE_PLEA > 0 && !m_bot->HasAura(DIVINE_PLEA, EFFECT_INDEX_0) && CombatCounter < 2 && ai->GetManaPercent() < 50 )
             {
                 ai->CastSpell (DIVINE_PLEA, *m_bot);
                 out << " Divine Plea";
