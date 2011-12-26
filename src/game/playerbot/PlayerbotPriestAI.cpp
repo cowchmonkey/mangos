@@ -80,10 +80,12 @@ bool PlayerbotPriestAI::HealTarget(Unit* target)
 	if (hp < 90 && ai->CastSpell(POWER_WORD_SHIELD, *target)) // "&& SPELL_NAME > 0 " removing as a test to see what happens
 		return true;
 	else if (hp < 95 && !target->HasAura(RENEW) && ai->CastSpell(RENEW, *target))
-        return true;	
-    else if (hp < 85 && ai->CastSpell(FLASH_HEAL, *target))
         return true;
-    else if (hp < 80 && ai->CastSpell(GREATER_HEAL, *target))
+	else if (hp < 85 && ai->CastSpell(HEAL, *target))
+		return true;	
+    else if (hp < 80 && ai->CastSpell(FLASH_HEAL, *target))
+        return true;
+    else if (hp < 75 && ai->CastSpell(GREATER_HEAL, *target))
         return true;
     // Heals target AND self for equal amount
     else if (hp < 60 && hpSelf < 80 && BINDING_HEAL > 0 && ai->CastSpell(BINDING_HEAL, *target))
@@ -147,7 +149,7 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
     {
         if (masterHP < 50 && POWER_WORD_SHIELD > 0 && !GetMaster()->HasAura(POWER_WORD_SHIELD, EFFECT_INDEX_0))
             ai->CastSpell(POWER_WORD_SHIELD, *(GetMaster()));
-        else if (masterHP < 50 || ((GetAI()->GetCombatOrder() & PlayerbotAI::ORDERS_HEAL) && masterHP < 80))
+        else if (masterHP < 50 || ((GetAI()->GetCombatOrder() & PlayerbotAI::ORDERS_HEAL) && masterHP < 75))
             HealTarget(GetMaster());
     }
 
@@ -172,7 +174,7 @@ void PlayerbotPriestAI::DoNextCombatManeuver(Unit *pTarget)
             uint32 memberHP = m_groupMember->GetHealth() * 100 / m_groupMember->GetMaxHealth();
             if (memberHP < 80 && POWER_WORD_SHIELD > 0 && !m_groupMember->HasAura(POWER_WORD_SHIELD, EFFECT_INDEX_0))
                 ai->CastSpell(POWER_WORD_SHIELD, *(GetMaster()));
-            else if (memberHP < 80 || ((GetAI()->GetCombatOrder() & PlayerbotAI::ORDERS_HEAL) && memberHP < 90)) //When to start to heal the group
+            else if (memberHP < 75 || ((GetAI()->GetCombatOrder() & PlayerbotAI::ORDERS_HEAL) && memberHP < 80)) //When to start to heal the group
                 HealTarget(m_groupMember);
         }
     }
